@@ -1,0 +1,19 @@
+@font-face {
+    font-family: 'BatonTurbo';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: local('BatonTurbo Regular');
+}
+@font-face {
+    font-family: 'BatonTurbo';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: local('BatonTurbo Medium');
+}
+
+:root,
+body {
+    font-family: 'BatonTurbo', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
