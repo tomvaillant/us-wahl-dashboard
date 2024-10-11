@@ -7,6 +7,14 @@
 }
 @font-face {
     font-family: 'BatonTurbo';
+    font-style: medium;
+    font-weight: 500;
+    font-display: swap;
+    src: local('BatonTurbo Medium');
+}
+
+@font-face {
+    font-family: 'BatonTurbo';
     font-style: bold;
     font-weight: 600;
     font-display: swap;

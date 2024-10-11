@@ -56,6 +56,22 @@
       }
     }
   
+    function updateLabels(d, trumpLabel, harrisLabel) {
+      trumpLabel.select(".label-text").text(`${d.trump.toFixed(1)}%`);
+      trumpLabel.select("rect")
+        .attr("width", trumpLabel.select(".label-text").node().getBBox().width + 10);
+      trumpLabel.select(".candidate-name")
+        .attr("x", trumpLabel.select("rect").attr("width"))
+        .attr("dx", 5);
+  
+      harrisLabel.select(".label-text").text(`${d.harris.toFixed(1)}%`);
+      harrisLabel.select("rect")
+        .attr("width", harrisLabel.select(".label-text").node().getBBox().width + 10);
+      harrisLabel.select(".candidate-name")
+        .attr("x", harrisLabel.select("rect").attr("width"))
+        .attr("dx", 5);
+    }
+  
     async function drawChart() {
       const data = await d3.csv(url, (d) => ({
         date: d3.timeParse("%Y-%m-%d")(d.date),
@@ -207,137 +223,90 @@
         .attr("width", 0)
         .attr("height", chartHeight)
         .attr("fill", "#f5f5f5")
-        .attr("opacity", 0.7);
+        .attr("opacity", 0.6);
   
       trumpLabel.raise();
       harrisLabel.raise();
   
-      svgElement
+      function updateChart(d) {
+        verticalLine.attr("x1", x(d.date)).attr("x2", x(d.date));
+        dateLabel
+          .attr("x", x(d.date))
+          .attr("y", -30)
+          .text(d3.timeFormat("%b %d")(d.date));
+  
+        const lead = Math.abs(d.harris - d.trump).toFixed(1);
+        const leadCandidate = d.harris > d.trump ? "Harris" : "Trump";
+        const leadColor = d.harris > d.trump ? harrisColor : trumpColor;
+  
+        leadIndicator
+          .attr("x", x(d.date))
+          .attr("y", -10)
+          .attr("fill", leadColor)
+          .text(`${leadCandidate} +${lead}`);
+  
+        setLabelPositions(d, trumpLabel, harrisLabel, x, y);
+        updateLabels(d, trumpLabel, harrisLabel);
+  
+        overlay.attr("x", x(d.date)).attr("width", chartWidth - x(d.date));
+      }
+  
+      function getDataPointFromX(xPos) {
+        const date = x.invert(xPos);
+        const bisect = d3.bisector((d) => d.date).left;
+        const index = bisect(data, date);
+        const d0 = data[index - 1];
+        const d1 = data[index];
+        return date - d0.date > d1.date - date ? d1 : d0;
+      }
+  
+      const interactionRect = svgElement
         .append("rect")
         .attr("width", chartWidth)
         .attr("height", chartHeight)
         .style("fill", "none")
-        .style("pointer-events", "all")
+        .style("opacity", "0.6")
+        .style("pointer-events", "all");
+  
+      // Mouse events
+      interactionRect
         .on("mousemove", function (event) {
           const [xPos] = d3.pointer(event, this);
-          const date = x.invert(xPos);
-          const bisect = d3.bisector((d) => d.date).left;
-          const index = bisect(data, date);
-          const d0 = data[index - 1];
-          const d1 = data[index];
-          const d = date - d0.date > d1.date - date ? d1 : d0;
-  
-          verticalLine.attr("x1", x(d.date)).attr("x2", x(d.date));
-          dateLabel
-            .attr("x", x(d.date))
-            .attr("y", -30)
-            .text(d3.timeFormat("%b %d")(d.date));
-  
-          const lead = Math.abs(d.harris - d.trump).toFixed(1);
-          const leadCandidate = d.harris > d.trump ? "Harris" : "Trump";
-          const leadColor = d.harris > d.trump ? harrisColor : trumpColor;
-  
-          leadIndicator
-            .attr("x", x(d.date))
-            .attr("y", -10)
-            .attr("fill", leadColor)
-            .text(`${leadCandidate} +${lead}`);
-  
-          setLabelPositions(d, trumpLabel, harrisLabel, x, y);
-  
-          trumpLabel.select(".label-text").text(`${d.trump.toFixed(1)}%`);
-          trumpLabel.select("rect")
-            .attr("width", trumpLabel.select(".label-text").node().getBBox().width + 10);
-          trumpLabel.select(".candidate-name")
-            .attr("x", trumpLabel.select("rect").attr("width"))
-            .attr("dx", 5);
-  
-          harrisLabel.select(".label-text").text(`${d.harris.toFixed(1)}%`);
-          harrisLabel.select("rect")
-            .attr("width", harrisLabel.select(".label-text").node().getBBox().width + 10);
-          harrisLabel.select(".candidate-name")
-            .attr("x", harrisLabel.select("rect").attr("width"))
-            .attr("dx", 5);
-  
-          // Update overlay rectangle
-          overlay
-            .attr("x", x(d.date))
-            .attr("width", chartWidth - x(d.date));
+          const d = getDataPointFromX(xPos);
+          updateChart(d);
         })
         .on("mouseleave", function () {
           // Reset to last data point when mouse leaves the chart
           const lastData = data[data.length - 1];
-          verticalLine.attr("x1", x(lastData.date)).attr("x2", x(lastData.date));
-          dateLabel
-            .attr("x", x(lastData.date))
-            .attr("y", -30)
-            .text(d3.timeFormat("%b %d")(d.date));
+          updateChart(lastData);
+        });
+  
+      // Touch events
+      let touchStartX;
+      interactionRect
+        .on("touchstart", function (event) {
+          event.preventDefault();
+          touchStartX = event.touches[0].clientX;
+        })
+        .on("touchmove", function (event) {
+          event.preventDefault();
+          const touchX = event.touches[0].clientX;
+          const rectBounds = this.getBoundingClientRect();
+          const xPos = touchX - rectBounds.left - paddingLeft;
           
-          const lead = Math.abs(lastData.harris - lastData.trump).toFixed(1);
-          const leadCandidate = lastData.harris > lastData.trump ? "Harris" : "Trump";
-          const leadColor = lastData.harris > lastData.trump ? harrisColor : trumpColor;
-  
-          leadIndicator
-            .attr("x", x(lastData.date))
-            .attr("y", -10)
-            .attr("fill", leadColor)
-            .text(`${leadCandidate} +${lead}`);
-  
-          setLabelPositions(lastData, trumpLabel, harrisLabel, x, y);
-  
-          trumpLabel.select(".label-text").text(`${lastData.trump.toFixed(1)}%`);
-          trumpLabel.select("rect")
-            .attr("width", trumpLabel.select(".label-text").node().getBBox().width + 10);
-          trumpLabel.select(".candidate-name")
-            .attr("x", trumpLabel.select("rect").attr("width"))
-            .attr("dx", 5);
-  
-          harrisLabel.select(".label-text").text(`${lastData.harris.toFixed(1)}%`);
-          harrisLabel.select("rect")
-            .attr("width", harrisLabel.select(".label-text").node().getBBox().width + 10);
-          harrisLabel.select(".candidate-name")
-            .attr("x", harrisLabel.select("rect").attr("width"))
-            .attr("dx", 5);
-          
-          // Reset overlay rectangle
-          overlay.attr("x", x(lastData.date)).attr("width", chartWidth - x(lastData.date));
+          if (xPos >= 0 && xPos <= chartWidth) {
+            const d = getDataPointFromX(xPos);
+            updateChart(d);
+          }
+        })
+        .on("touchend", function (event) {
+          event.preventDefault();
+          // Don't reset to the last data point on touch end
         });
   
       // Initialize with last data point
       const lastData = data[data.length - 1];
-      verticalLine.attr("x1", x(lastData.date)).attr("x2", x(lastData.date));
-      dateLabel
-        .attr("x", x(lastData.date))
-        .attr("y", -30)
-        .text(d3.timeFormat("%b %d")(lastData.date));
-  
-      const lead = Math.abs(lastData.harris - lastData.trump).toFixed(1);
-      const leadCandidate = lastData.harris > lastData.trump ? "Harris" : "Trump";
-      const leadColor = lastData.harris > lastData.trump ? harrisColor : trumpColor;
-  
-      leadIndicator
-        .attr("x", x(lastData.date))
-        .attr("y", -10)
-        .attr("fill", leadColor)
-        .text(`${leadCandidate} +${lead}`);
-  
-      setLabelPositions(lastData, trumpLabel, harrisLabel, x, y);
-  
-      trumpLabel.select(".label-text").text(`${lastData.trump.toFixed(1)}%`);
-      trumpLabel.select("rect")
-        .attr("width", trumpLabel.select(".label-text").node().getBBox().width + 10);
-      trumpLabel.select(".candidate-name")
-        .attr("x", trumpLabel.select("rect").attr("width"))
-        .attr("dx", 5);
-  
-      harrisLabel.select(".label-text").text(`${lastData.harris.toFixed(1)}%`);
-      harrisLabel.select("rect")
-        .attr("width", harrisLabel.select(".label-text").node().getBBox().width + 10);
-      harrisLabel.select(".candidate-name")
-        .attr("x", harrisLabel.select("rect").attr("width"))
-        .attr("dx", 5);
-  
-      overlay.attr("x", x(lastData.date)).attr("width", chartWidth - x(lastData.date));
+      updateChart(lastData);
     }
   
     onMount(() => {
@@ -363,13 +332,14 @@
     .chart-container {
       width: 100%;
       font-family: "BatonTurbo", Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+      z-index: 2;
     }
   
     .chart-wrapper {
       width: 100%;
       height: 40vh;
-      background-color: #f5f5f5;
-      border: 1px solid #e0e0e0;
+      background-color: rgba(245, 245, 245, 0.6);
+      border: 1px solid #07184D;
       border-radius: 8px;
     }
   
@@ -383,29 +353,29 @@
     }
 
     @media (max-width: 768px) {
-    :global(.y-axis-label) {
-      font-size: 12px;
-    }
+      :global(.y-axis-label) {
+        font-size: 12px;
+      }
 
-    :global(.x-axis-label) {
-      font-size: 10px;
-    }
+      :global(.x-axis-label) {
+        font-size: 10px;
+      }
 
-    :global(.label-text) {
-      font-size: 10px;
-    }
+      :global(.label-text) {
+        font-size: 10px;
+      }
 
-    :global(.candidate-name) {
-      font-size: 10px;
-    }
+      :global(.candidate-name) {
+        font-size: 10px;
+      }
 
-    :global(.date-label) {
-      font-size: 12px;
-      font-weight: bold;
-    }
+      :global(.date-label) {
+        font-size: 12px;
+        font-weight: bold;
+      }
 
-    :global(.lead-indicator) {
-      font-size: 12px;
+      :global(.lead-indicator) {
+        font-size: 12px;
+      }
     }
-  }
-</style>
+  </style>
