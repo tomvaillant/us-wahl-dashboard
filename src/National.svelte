@@ -339,8 +339,8 @@
       width: 100%;
       height: 40vh;
       background-color: rgba(245, 245, 245, 0.6);
-      border: 1px solid #07184D;
-      border-radius: 8px;
+      border: 1px solid rgba(7, 24, 77, 0.3);
+      border-radius: 10px;
     }
   
     svg {
