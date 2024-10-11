@@ -4,7 +4,6 @@
   
   <style>
     .logo {
-      margin-bottom: 20px;
       text-align: center;
     }
     
@@ -12,4 +11,10 @@
       width: 75px;
       height: auto;
     }
+
+    @media (max-width: 768px) {
+	  .logo img {
+      width: 50px;
+	  }
+	}
   </style>

@@ -7,10 +7,10 @@
 }
 @font-face {
     font-family: 'BatonTurbo';
-    font-style: normal;
+    font-style: bold;
     font-weight: 600;
     font-display: swap;
-    src: local('BatonTurbo Medium');
+    src: local('BatonTurbo Bold');
 }
 
 :root,
