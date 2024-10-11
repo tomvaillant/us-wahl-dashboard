@@ -4,10 +4,11 @@
 	import SwingStates from './SwingStates.svelte';
 	import GridBackground from './GridBackground.svelte';
 	import Faceoff from './Faceoff.svelte';
+	import Map from './Map.svelte';
   </script>
 
   <Faceoff />
-  <GridBackground />
+  <!-- <GridBackground /> -->
   <main>
 	<Logo />
 	<div class="content-wrapper">
@@ -17,6 +18,7 @@
 		</div>
 	  <National />
 	  <SwingStates />
+	  <Map />
 	</div>
   </main>
   
@@ -47,14 +49,13 @@
 	.content-wrapper {
   width: 100%;
   margin: 0 auto;
-  padding: 0 20px; /* Add some padding for small screens */
   box-sizing: border-box; /* Ensure padding is included in the width */
 }
 
 	/* Mobile devices */
 	@media (max-width: 767px) {
 	.content-wrapper {
-		max-width: 95%;
+		max-width: 100%;
 	}
 	}
 
@@ -62,6 +63,7 @@
 	@media (min-width: 768px) and (max-width: 1199px) {
 	.content-wrapper {
 		max-width: 80%;
+		padding: 0 5px;
 	}
 	}
 

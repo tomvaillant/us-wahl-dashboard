@@ -25,3 +25,7 @@
 body {
     font-family: 'BatonTurbo', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
+
+body {
+	background: #f5f5f5;
+}
